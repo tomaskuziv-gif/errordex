@@ -156,7 +156,7 @@ export default function ErrorDex() {
 
   const selectedEntry = FAILURES.find((f) => f.id === selectedId);
 
-  const openEntry = (id) => {
+const openEntry = (id: string) => {
     setSelectedId(id);
     setView("entry");
   };
