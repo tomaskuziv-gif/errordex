@@ -25,7 +25,7 @@ const FAILURES = [
   run: npx jest --maxWorkers=2 --forceExit`,
     sponsored: {
       name: "Depot",
-      tagline: "10× faster Docker builds with remote cache — no OOM on ephemeral runners.",
+      tagline: "10x faster Docker builds with remote cache — no OOM on ephemeral runners.",
       url: "#",
     },
     related: ["gha-exit-1-docker-buildx", "gha-node-heap-exceeded"],
@@ -42,7 +42,7 @@ const FAILURES = [
     fixSteps: [
       "Explicitly pass --file flag: docker buildx build --file ./apps/api/Dockerfile .",
       "Check if you set working-directory on the job/step — Buildx context inherits this.",
-      "Verify the Dockerfile path with: ls -la ${{ github.workspace }} in a prior step.",
+      "Verify the Dockerfile path with: ls -la in a prior step.",
       "If using docker/build-push-action, set context: ./apps/api and file: ./apps/api/Dockerfile.",
     ],
     reproduction: `# Broken
@@ -67,7 +67,7 @@ const FAILURES = [
     toolchain: "Docker",
     severity: "critical",
     tags: ["docker", "daemon", "socket", "gitlab", "dind"],
-    rootCause: "Your GitLab runner is using the shell executor but Docker is either not installed, not started, or the gitlab-runner user doesn't have permission to access the Docker socket. Alternatively you're using the docker executor without docker:dind service.",
+    rootCause: "Your GitLab runner is using the shell executor but Docker is either not installed, not started, or the gitlab-runner user does not have permission to access the Docker socket.",
     fixSteps: [
       "For shell executor: sudo usermod -aG docker gitlab-runner, then restart the runner.",
       "For docker executor: add services: [docker:24-dind] and set DOCKER_HOST: tcp://docker:2376.",
@@ -134,8 +134,8 @@ const PROVIDER_COLORS = {
 };
 
 export default function ErrorDex() {
-  const [view, setView] = useState("home"); // home | entry | submit | submitted
- const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [view, setView] = useState("home");
+  const [selectedId, setSelectedId] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [submitForm, setSubmitForm] = useState({ error: "", provider: "", runner: "", toolchain: "" });
   const [activeFilter, setActiveFilter] = useState("all");
@@ -156,7 +156,7 @@ export default function ErrorDex() {
 
   const selectedEntry = FAILURES.find((f) => f.id === selectedId);
 
-const openEntry = (id) => {
+  const openEntry = (id) => {
     setSelectedId(id);
     setView("entry");
   };
@@ -165,7 +165,6 @@ const openEntry = (id) => {
     <div style={styles.root}>
       <style>{globalCSS}</style>
 
-      {/* NAV */}
       <nav style={styles.nav}>
         <button style={styles.logo} onClick={() => setView("home")}>
           <span style={styles.logoIcon}>⬡</span>
@@ -177,7 +176,6 @@ const openEntry = (id) => {
         </div>
       </nav>
 
-      {/* HOME */}
       {view === "home" && (
         <div style={styles.page}>
           <div style={styles.hero}>
@@ -218,7 +216,6 @@ const openEntry = (id) => {
             </div>
           </div>
 
-          {/* RESULTS */}
           <div style={styles.results}>
             {filtered.length === 0 && (
               <div style={styles.empty}>
@@ -272,7 +269,6 @@ const openEntry = (id) => {
         </div>
       )}
 
-      {/* ENTRY DETAIL */}
       {view === "entry" && selectedEntry && (
         <div style={styles.page}>
           <button style={styles.backBtn} onClick={() => setView("home")}>← Back to search</button>
@@ -293,13 +289,11 @@ const openEntry = (id) => {
 
           <div style={styles.entryGrid}>
             <div style={styles.entryMain}>
-              {/* ROOT CAUSE */}
               <section style={styles.section}>
                 <div style={styles.sectionLabel}>ROOT CAUSE</div>
                 <p style={styles.sectionText}>{selectedEntry.rootCause}</p>
               </section>
 
-              {/* FIX STEPS */}
               <section style={styles.section}>
                 <div style={styles.sectionLabel}>FIX STEPS</div>
                 <ol style={styles.fixList}>
@@ -312,7 +306,6 @@ const openEntry = (id) => {
                 </ol>
               </section>
 
-              {/* REPRODUCTION */}
               <section style={styles.section}>
                 <div style={styles.sectionLabel}>MINIMAL REPRODUCTION</div>
                 <div style={styles.codeBlock}>
@@ -322,7 +315,6 @@ const openEntry = (id) => {
             </div>
 
             <div style={styles.entrySidebar}>
-              {/* SPONSORED */}
               {selectedEntry.sponsored && (
                 <div style={styles.sponsoredCard}>
                   <div style={styles.sponsoredLabel}>SPONSORED FIX</div>
@@ -334,7 +326,6 @@ const openEntry = (id) => {
                 </div>
               )}
 
-              {/* RELATED */}
               <div style={styles.relatedCard}>
                 <div style={styles.sectionLabel}>RELATED FAILURES</div>
                 {selectedEntry.related.map((rid) => {
@@ -349,7 +340,6 @@ const openEntry = (id) => {
                 })}
               </div>
 
-              {/* SUBMIT CTA */}
               <div style={styles.submitCta}>
                 <p style={styles.submitCtaText}>Got a variation of this error?</p>
                 <button style={styles.btnOutline} onClick={() => setView("submit")}>
@@ -361,7 +351,6 @@ const openEntry = (id) => {
         </div>
       )}
 
-      {/* SUBMIT FORM */}
       {view === "submit" && (
         <div style={styles.page}>
           <button style={styles.backBtn} onClick={() => setView("home")}>← Back</button>
@@ -369,7 +358,7 @@ const openEntry = (id) => {
             <div style={styles.formHeader}>
               <div style={styles.heroEyebrow}>Contribute</div>
               <h2 style={styles.formTitle}>Submit an error signature</h2>
-              <p style={styles.formSubtitle}>Your submission is anonymized. We'll standardize it and add it to the index.</p>
+              <p style={styles.formSubtitle}>Your submission is anonymized. We will standardize it and add it to the index.</p>
             </div>
 
             <div style={styles.formFields}>
@@ -419,7 +408,7 @@ const openEntry = (id) => {
               />
 
               <div style={styles.privacyNote}>
-                🔒 No account needed. No IP logged. Submission is reviewed before publishing.
+                No account needed. No IP logged. Submission is reviewed before publishing.
               </div>
 
               <button
@@ -434,14 +423,13 @@ const openEntry = (id) => {
         </div>
       )}
 
-      {/* SUBMITTED */}
       {view === "submitted" && (
         <div style={styles.page}>
           <div style={styles.successWrap}>
             <div style={styles.successIcon}>✓</div>
             <h2 style={styles.successTitle}>Submitted for review</h2>
             <p style={styles.successText}>
-              Your error signature is queued. Once reviewed and standardized, it'll be indexed and searchable — helping the next engineer who hits the same wall.
+              Your error signature is queued. Once reviewed and standardized, it will be indexed and searchable.
             </p>
             <button style={styles.btnPrimary} onClick={() => { setView("home"); setSubmitForm({ error: "", provider: "", runner: "", toolchain: "" }); }}>
               Back to search
@@ -455,571 +443,99 @@ const openEntry = (id) => {
 
 const globalCSS = `
   @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Epilogue:wght@400;500;700;900&display=swap');
-
   * { box-sizing: border-box; margin: 0; padding: 0; }
-
-  .card-hover {
-    transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
-    animation: fadeUp 0.4s ease both;
-  }
-  .card-hover:hover {
-    transform: translateY(-2px);
-    border-color: rgba(0,255,136,0.35) !important;
-    box-shadow: 0 8px 32px rgba(0,255,136,0.08) !important;
-  }
-
-  @keyframes fadeUp {
-    from { opacity: 0; transform: translateY(16px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-
+  .card-hover { transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease; animation: fadeUp 0.4s ease both; }
+  .card-hover:hover { transform: translateY(-2px); border-color: rgba(0,255,136,0.35) !important; box-shadow: 0 8px 32px rgba(0,255,136,0.08) !important; }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
   ::-webkit-scrollbar { width: 6px; }
   ::-webkit-scrollbar-track { background: #0a0a0a; }
   ::-webkit-scrollbar-thumb { background: #2a2a2a; border-radius: 3px; }
 `;
 
 const styles = {
-  root: {
-    minHeight: "100vh",
-    background: "#0a0a0a",
-    color: "#e8e8e0",
-    fontFamily: "'Epilogue', sans-serif",
-  },
-  nav: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    padding: "0 32px",
-    height: 56,
-    borderBottom: "1px solid #1a1a1a",
-    position: "sticky",
-    top: 0,
-    background: "rgba(10,10,10,0.95)",
-    backdropFilter: "blur(12px)",
-    zIndex: 100,
-  },
-  logo: {
-    display: "flex",
-    alignItems: "center",
-    gap: 8,
-    background: "none",
-    border: "none",
-    cursor: "pointer",
-    padding: 0,
-  },
+  root: { minHeight: "100vh", background: "#0a0a0a", color: "#e8e8e0", fontFamily: "'Epilogue', sans-serif" },
+  nav: { display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 32px", height: 56, borderBottom: "1px solid #1a1a1a", position: "sticky", top: 0, background: "rgba(10,10,10,0.95)", backdropFilter: "blur(12px)", zIndex: 100 },
+  logo: { display: "flex", alignItems: "center", gap: 8, background: "none", border: "none", cursor: "pointer", padding: 0 },
   logoIcon: { fontSize: 20, color: "#00ff88" },
-  logoText: {
-    fontFamily: "'JetBrains Mono', monospace",
-    fontWeight: 700,
-    fontSize: 16,
-    color: "#e8e8e0",
-    letterSpacing: "-0.5px",
-  },
+  logoText: { fontFamily: "'JetBrains Mono', monospace", fontWeight: 700, fontSize: 16, color: "#e8e8e0", letterSpacing: "-0.5px" },
   navLinks: { display: "flex", gap: 8, alignItems: "center" },
-  navLink: {
-    background: "none",
-    border: "none",
-    color: "#888",
-    fontSize: 13,
-    cursor: "pointer",
-    padding: "6px 12px",
-    borderRadius: 6,
-    transition: "color 0.15s",
-    fontFamily: "'Epilogue', sans-serif",
-  },
-  navLinkAccent: {
-    background: "rgba(0,255,136,0.08)",
-    border: "1px solid rgba(0,255,136,0.2)",
-    color: "#00ff88",
-    fontSize: 13,
-    cursor: "pointer",
-    padding: "6px 14px",
-    borderRadius: 6,
-    fontFamily: "'Epilogue', sans-serif",
-    fontWeight: 500,
-  },
-
-  page: {
-    maxWidth: 900,
-    margin: "0 auto",
-    padding: "48px 24px",
-  },
-
+  navLink: { background: "none", border: "none", color: "#888", fontSize: 13, cursor: "pointer", padding: "6px 12px", borderRadius: 6, fontFamily: "'Epilogue', sans-serif" },
+  navLinkAccent: { background: "rgba(0,255,136,0.08)", border: "1px solid rgba(0,255,136,0.2)", color: "#00ff88", fontSize: 13, cursor: "pointer", padding: "6px 14px", borderRadius: 6, fontFamily: "'Epilogue', sans-serif", fontWeight: 500 },
+  page: { maxWidth: 900, margin: "0 auto", padding: "48px 24px" },
   hero: { textAlign: "center", marginBottom: 40 },
-  heroEyebrow: {
-    fontFamily: "'JetBrains Mono', monospace",
-    fontSize: 11,
-    letterSpacing: "0.15em",
-    color: "#00ff88",
-    textTransform: "uppercase",
-    marginBottom: 16,
-  },
-  heroTitle: {
-    fontSize: "clamp(36px, 6vw, 58px)",
-    fontWeight: 900,
-    lineHeight: 1.05,
-    letterSpacing: "-2px",
-    color: "#f0f0e8",
-    marginBottom: 16,
-  },
+  heroEyebrow: { fontFamily: "'JetBrains Mono', monospace", fontSize: 11, letterSpacing: "0.15em", color: "#00ff88", textTransform: "uppercase", marginBottom: 16 },
+  heroTitle: { fontSize: "clamp(36px, 6vw, 58px)", fontWeight: 900, lineHeight: 1.05, letterSpacing: "-2px", color: "#f0f0e8", marginBottom: 16 },
   heroAccent: { color: "#00ff88" },
-  heroSub: {
-    fontSize: 16,
-    color: "#666",
-    maxWidth: 480,
-    margin: "0 auto 32px",
-    lineHeight: 1.6,
-  },
-
-  searchWrap: {
-    display: "flex",
-    alignItems: "center",
-    background: "#111",
-    border: "1px solid #2a2a2a",
-    borderRadius: 10,
-    padding: "0 16px",
-    transition: "border-color 0.2s",
-    maxWidth: 640,
-    margin: "0 auto 16px",
-  },
-  searchIcon: {
-    fontSize: 20,
-    color: "#444",
-    marginRight: 10,
-    fontFamily: "monospace",
-  },
-  searchInput: {
-    flex: 1,
-    background: "none",
-    border: "none",
-    outline: "none",
-    color: "#e8e8e0",
-    fontSize: 14,
-    padding: "14px 0",
-    fontFamily: "'JetBrains Mono', monospace",
-  },
-  searchClear: {
-    background: "none",
-    border: "none",
-    color: "#444",
-    cursor: "pointer",
-    fontSize: 14,
-    padding: 4,
-  },
-
-  filters: {
-    display: "flex",
-    justifyContent: "center",
-    gap: 8,
-    flexWrap: "wrap",
-  },
-  filterChip: {
-    background: "none",
-    border: "1px solid #222",
-    color: "#666",
-    fontSize: 12,
-    padding: "5px 12px",
-    borderRadius: 20,
-    cursor: "pointer",
-    fontFamily: "'JetBrains Mono', monospace",
-    transition: "all 0.15s",
-  },
-  filterChipActive: {
-    border: "1px solid #00ff88",
-    color: "#00ff88",
-    background: "rgba(0,255,136,0.06)",
-  },
-
+  heroSub: { fontSize: 16, color: "#666", maxWidth: 480, margin: "0 auto 32px", lineHeight: 1.6 },
+  searchWrap: { display: "flex", alignItems: "center", background: "#111", border: "1px solid #2a2a2a", borderRadius: 10, padding: "0 16px", maxWidth: 640, margin: "0 auto 16px" },
+  searchIcon: { fontSize: 20, color: "#444", marginRight: 10, fontFamily: "monospace" },
+  searchInput: { flex: 1, background: "none", border: "none", outline: "none", color: "#e8e8e0", fontSize: 14, padding: "14px 0", fontFamily: "'JetBrains Mono', monospace" },
+  searchClear: { background: "none", border: "none", color: "#444", cursor: "pointer", fontSize: 14, padding: 4 },
+  filters: { display: "flex", justifyContent: "center", gap: 8, flexWrap: "wrap" },
+  filterChip: { background: "none", border: "1px solid #222", color: "#666", fontSize: 12, padding: "5px 12px", borderRadius: 20, cursor: "pointer", fontFamily: "'JetBrains Mono', monospace" },
+  filterChipActive: { border: "1px solid #00ff88", color: "#00ff88", background: "rgba(0,255,136,0.06)" },
   results: { display: "flex", flexDirection: "column", gap: 12 },
-  card: {
-    background: "#111",
-    border: "1px solid #1e1e1e",
-    borderRadius: 10,
-    padding: "20px 24px",
-    cursor: "pointer",
-    textAlign: "left",
-    width: "100%",
-    display: "flex",
-    flexDirection: "column",
-    gap: 10,
-  },
-  cardTop: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
+  card: { background: "#111", border: "1px solid #1e1e1e", borderRadius: 10, padding: "20px 24px", cursor: "pointer", textAlign: "left", width: "100%", display: "flex", flexDirection: "column", gap: 10 },
+  cardTop: { display: "flex", justifyContent: "space-between", alignItems: "center" },
   cardMeta: { display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" },
   cardArrow: { color: "#333", fontSize: 18 },
-  cardError: {
-    fontFamily: "'JetBrains Mono', monospace",
-    fontSize: 13,
-    color: "#e8e8e0",
-    lineHeight: 1.5,
-    wordBreak: "break-word",
-  },
-  cardFooter: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    flexWrap: "wrap",
-    gap: 8,
-  },
+  cardError: { fontFamily: "'JetBrains Mono', monospace", fontSize: 13, color: "#e8e8e0", lineHeight: 1.5, wordBreak: "break-word" },
+  cardFooter: { display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8 },
   cardTags: { display: "flex", gap: 6, flexWrap: "wrap" },
-
-  severityBadge: {
-    fontFamily: "'JetBrains Mono', monospace",
-    fontSize: 10,
-    fontWeight: 700,
-    letterSpacing: "0.08em",
-    padding: "3px 8px",
-    borderRadius: 4,
-  },
-  providerBadge: {
-    fontFamily: "'JetBrains Mono', monospace",
-    fontSize: 11,
-    fontWeight: 600,
-  },
-  runnerBadge: {
-    fontFamily: "'JetBrains Mono', monospace",
-    fontSize: 11,
-    color: "#555",
-    background: "#161616",
-    padding: "2px 8px",
-    borderRadius: 4,
-  },
-  toolchainLabel: {
-    fontSize: 12,
-    color: "#555",
-    fontFamily: "'JetBrains Mono', monospace",
-  },
-  tag: {
-    fontSize: 11,
-    color: "#444",
-    background: "#161616",
-    padding: "2px 7px",
-    borderRadius: 4,
-    fontFamily: "'JetBrains Mono', monospace",
-  },
-
-  empty: {
-    textAlign: "center",
-    padding: "64px 24px",
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    gap: 12,
-  },
+  severityBadge: { fontFamily: "'JetBrains Mono', monospace", fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", padding: "3px 8px", borderRadius: 4 },
+  providerBadge: { fontFamily: "'JetBrains Mono', monospace", fontSize: 11, fontWeight: 600 },
+  runnerBadge: { fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: "#555", background: "#161616", padding: "2px 8px", borderRadius: 4 },
+  toolchainLabel: { fontSize: 12, color: "#555", fontFamily: "'JetBrains Mono', monospace" },
+  tag: { fontSize: 11, color: "#444", background: "#161616", padding: "2px 7px", borderRadius: 4, fontFamily: "'JetBrains Mono', monospace" },
+  empty: { textAlign: "center", padding: "64px 24px", display: "flex", flexDirection: "column", alignItems: "center", gap: 12 },
   emptyIcon: { fontSize: 36, opacity: 0.3 },
   emptyText: { fontSize: 18, color: "#666" },
   emptySubtext: { fontSize: 14, color: "#444" },
-
-  statsBar: {
-    display: "flex",
-    justifyContent: "center",
-    gap: 12,
-    marginTop: 40,
-    color: "#444",
-    fontSize: 13,
-    fontFamily: "'JetBrains Mono', monospace",
-  },
+  statsBar: { display: "flex", justifyContent: "center", gap: 12, marginTop: 40, color: "#444", fontSize: 13, fontFamily: "'JetBrains Mono', monospace" },
   stat: { color: "#555" },
   statDot: { color: "#2a2a2a" },
-
-  // ENTRY
-  backBtn: {
-    background: "none",
-    border: "none",
-    color: "#555",
-    fontSize: 13,
-    cursor: "pointer",
-    marginBottom: 32,
-    fontFamily: "'Epilogue', sans-serif",
-    padding: 0,
-    display: "block",
-    transition: "color 0.15s",
-  },
-  entryHeader: {
-    marginBottom: 40,
-    paddingBottom: 32,
-    borderBottom: "1px solid #1a1a1a",
-  },
-  entryErrorString: {
-    fontFamily: "'JetBrains Mono', monospace",
-    fontSize: "clamp(16px, 2.5vw, 22px)",
-    color: "#f0f0e8",
-    lineHeight: 1.5,
-    marginTop: 16,
-    wordBreak: "break-word",
-  },
-  entryGrid: {
-    display: "grid",
-    gridTemplateColumns: "1fr 280px",
-    gap: 32,
-    alignItems: "start",
-  },
+  backBtn: { background: "none", border: "none", color: "#555", fontSize: 13, cursor: "pointer", marginBottom: 32, fontFamily: "'Epilogue', sans-serif", padding: 0, display: "block" },
+  entryHeader: { marginBottom: 40, paddingBottom: 32, borderBottom: "1px solid #1a1a1a" },
+  entryErrorString: { fontFamily: "'JetBrains Mono', monospace", fontSize: "clamp(16px, 2.5vw, 22px)", color: "#f0f0e8", lineHeight: 1.5, marginTop: 16, wordBreak: "break-word" },
+  entryGrid: { display: "grid", gridTemplateColumns: "1fr 280px", gap: 32, alignItems: "start" },
   entryMain: { display: "flex", flexDirection: "column", gap: 32 },
   entrySidebar: { display: "flex", flexDirection: "column", gap: 16 },
-
   section: {},
-  sectionLabel: {
-    fontFamily: "'JetBrains Mono', monospace",
-    fontSize: 10,
-    letterSpacing: "0.15em",
-    color: "#444",
-    textTransform: "uppercase",
-    marginBottom: 12,
-  },
-  sectionText: {
-    fontSize: 14,
-    color: "#999",
-    lineHeight: 1.7,
-  },
-  fixList: {
-    listStyle: "none",
-    display: "flex",
-    flexDirection: "column",
-    gap: 12,
-  },
-  fixItem: {
-    display: "flex",
-    gap: 14,
-    alignItems: "flex-start",
-  },
-  fixNum: {
-    fontFamily: "'JetBrains Mono', monospace",
-    fontSize: 11,
-    color: "#00ff88",
-    minWidth: 24,
-    paddingTop: 2,
-    opacity: 0.7,
-  },
-  fixText: {
-    fontSize: 14,
-    color: "#bbb",
-    lineHeight: 1.6,
-  },
-  codeBlock: {
-    background: "#0d0d0d",
-    border: "1px solid #1e1e1e",
-    borderRadius: 8,
-    overflow: "hidden",
-  },
-  code: {
-    fontFamily: "'JetBrains Mono', monospace",
-    fontSize: 12,
-    color: "#7ec8a0",
-    lineHeight: 1.8,
-    padding: "20px 24px",
-    overflow: "auto",
-    whiteSpace: "pre",
-  },
-
-  sponsoredCard: {
-    background: "rgba(0,255,136,0.04)",
-    border: "1px solid rgba(0,255,136,0.15)",
-    borderRadius: 10,
-    padding: "20px",
-  },
-  sponsoredLabel: {
-    fontFamily: "'JetBrains Mono', monospace",
-    fontSize: 9,
-    letterSpacing: "0.15em",
-    color: "#00ff88",
-    opacity: 0.7,
-    marginBottom: 8,
-  },
-  sponsoredName: {
-    fontSize: 16,
-    fontWeight: 700,
-    color: "#f0f0e8",
-    marginBottom: 8,
-  },
-  sponsoredTagline: {
-    fontSize: 13,
-    color: "#777",
-    lineHeight: 1.5,
-    marginBottom: 14,
-  },
-  sponsoredBtn: {
-    display: "inline-block",
-    fontSize: 12,
-    color: "#00ff88",
-    textDecoration: "none",
-    fontFamily: "'JetBrains Mono', monospace",
-    fontWeight: 600,
-  },
-  relatedCard: {
-    background: "#111",
-    border: "1px solid #1e1e1e",
-    borderRadius: 10,
-    padding: "20px",
-    display: "flex",
-    flexDirection: "column",
-    gap: 12,
-  },
-  relatedItem: {
-    background: "none",
-    border: "none",
-    cursor: "pointer",
-    display: "flex",
-    alignItems: "flex-start",
-    gap: 10,
-    padding: 0,
-    textAlign: "left",
-  },
-  relatedText: {
-    fontSize: 12,
-    color: "#666",
-    fontFamily: "'JetBrains Mono', monospace",
-    lineHeight: 1.5,
-    transition: "color 0.15s",
-  },
-  severityDot: {
-    width: 6,
-    height: 6,
-    borderRadius: "50%",
-    marginTop: 5,
-    flexShrink: 0,
-  },
-  submitCta: {
-    background: "#111",
-    border: "1px solid #1e1e1e",
-    borderRadius: 10,
-    padding: "20px",
-    textAlign: "center",
-  },
-  submitCtaText: {
-    fontSize: 13,
-    color: "#555",
-    marginBottom: 12,
-  },
-
-  // FORM
-  formWrap: {
-    maxWidth: 580,
-    margin: "0 auto",
-  },
+  sectionLabel: { fontFamily: "'JetBrains Mono', monospace", fontSize: 10, letterSpacing: "0.15em", color: "#444", textTransform: "uppercase", marginBottom: 12 },
+  sectionText: { fontSize: 14, color: "#999", lineHeight: 1.7 },
+  fixList: { listStyle: "none", display: "flex", flexDirection: "column", gap: 12 },
+  fixItem: { display: "flex", gap: 14, alignItems: "flex-start" },
+  fixNum: { fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: "#00ff88", minWidth: 24, paddingTop: 2, opacity: 0.7 },
+  fixText: { fontSize: 14, color: "#bbb", lineHeight: 1.6 },
+  codeBlock: { background: "#0d0d0d", border: "1px solid #1e1e1e", borderRadius: 8, overflow: "hidden" },
+  code: { fontFamily: "'JetBrains Mono', monospace", fontSize: 12, color: "#7ec8a0", lineHeight: 1.8, padding: "20px 24px", overflow: "auto", whiteSpace: "pre" },
+  sponsoredCard: { background: "rgba(0,255,136,0.04)", border: "1px solid rgba(0,255,136,0.15)", borderRadius: 10, padding: "20px" },
+  sponsoredLabel: { fontFamily: "'JetBrains Mono', monospace", fontSize: 9, letterSpacing: "0.15em", color: "#00ff88", opacity: 0.7, marginBottom: 8 },
+  sponsoredName: { fontSize: 16, fontWeight: 700, color: "#f0f0e8", marginBottom: 8 },
+  sponsoredTagline: { fontSize: 13, color: "#777", lineHeight: 1.5, marginBottom: 14 },
+  sponsoredBtn: { display: "inline-block", fontSize: 12, color: "#00ff88", textDecoration: "none", fontFamily: "'JetBrains Mono', monospace", fontWeight: 600 },
+  relatedCard: { background: "#111", border: "1px solid #1e1e1e", borderRadius: 10, padding: "20px", display: "flex", flexDirection: "column", gap: 12 },
+  relatedItem: { background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "flex-start", gap: 10, padding: 0, textAlign: "left" },
+  relatedText: { fontSize: 12, color: "#666", fontFamily: "'JetBrains Mono', monospace", lineHeight: 1.5 },
+  severityDot: { width: 6, height: 6, borderRadius: "50%", marginTop: 5, flexShrink: 0 },
+  submitCta: { background: "#111", border: "1px solid #1e1e1e", borderRadius: 10, padding: "20px", textAlign: "center" },
+  submitCtaText: { fontSize: 13, color: "#555", marginBottom: 12 },
+  formWrap: { maxWidth: 580, margin: "0 auto" },
   formHeader: { marginBottom: 40 },
-  formTitle: {
-    fontSize: 36,
-    fontWeight: 900,
-    letterSpacing: "-1.5px",
-    color: "#f0f0e8",
-    marginBottom: 10,
-  },
+  formTitle: { fontSize: 36, fontWeight: 900, letterSpacing: "-1.5px", color: "#f0f0e8", marginBottom: 10 },
   formSubtitle: { fontSize: 14, color: "#666", lineHeight: 1.6 },
   formFields: { display: "flex", flexDirection: "column", gap: 20 },
-  fieldLabel: {
-    display: "block",
-    fontSize: 11,
-    fontFamily: "'JetBrains Mono', monospace",
-    color: "#555",
-    letterSpacing: "0.08em",
-    marginBottom: 8,
-    textTransform: "uppercase",
-  },
+  fieldLabel: { display: "block", fontSize: 11, fontFamily: "'JetBrains Mono', monospace", color: "#555", letterSpacing: "0.08em", marginBottom: 8, textTransform: "uppercase" },
   fieldRow: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 },
   fieldGroup: { display: "flex", flexDirection: "column" },
-  textarea: {
-    background: "#111",
-    border: "1px solid #222",
-    borderRadius: 8,
-    color: "#e8e8e0",
-    fontFamily: "'JetBrains Mono', monospace",
-    fontSize: 12,
-    padding: "12px 16px",
-    resize: "vertical",
-    outline: "none",
-    lineHeight: 1.6,
-  },
-  input: {
-    background: "#111",
-    border: "1px solid #222",
-    borderRadius: 8,
-    color: "#e8e8e0",
-    fontFamily: "'JetBrains Mono', monospace",
-    fontSize: 12,
-    padding: "12px 16px",
-    outline: "none",
-  },
-  select: {
-    background: "#111",
-    border: "1px solid #222",
-    borderRadius: 8,
-    color: "#e8e8e0",
-    fontFamily: "'JetBrains Mono', monospace",
-    fontSize: 12,
-    padding: "12px 16px",
-    outline: "none",
-  },
-  privacyNote: {
-    fontSize: 12,
-    color: "#444",
-    background: "#0d0d0d",
-    border: "1px solid #1a1a1a",
-    borderRadius: 6,
-    padding: "10px 14px",
-    fontFamily: "'JetBrains Mono', monospace",
-  },
-
-  // BUTTONS
-  btnPrimary: {
-    background: "#00ff88",
-    color: "#0a0a0a",
-    border: "none",
-    borderRadius: 8,
-    padding: "13px 24px",
-    fontSize: 13,
-    fontWeight: 700,
-    fontFamily: "'Epilogue', sans-serif",
-    cursor: "pointer",
-    transition: "opacity 0.15s",
-    letterSpacing: "-0.3px",
-  },
-  btnOutline: {
-    background: "none",
-    border: "1px solid #2a2a2a",
-    color: "#888",
-    borderRadius: 8,
-    padding: "10px 18px",
-    fontSize: 12,
-    cursor: "pointer",
-    fontFamily: "'JetBrains Mono', monospace",
-    transition: "border-color 0.15s",
-  },
-
-  // SUCCESS
-  successWrap: {
-    maxWidth: 480,
-    margin: "80px auto",
-    textAlign: "center",
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    gap: 16,
-  },
-  successIcon: {
-    width: 56,
-    height: 56,
-    borderRadius: "50%",
-    background: "rgba(0,255,136,0.1)",
-    border: "1px solid rgba(0,255,136,0.3)",
-    color: "#00ff88",
-    fontSize: 24,
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  successTitle: {
-    fontSize: 28,
-    fontWeight: 900,
-    letterSpacing: "-1px",
-    color: "#f0f0e8",
-  },
-  successText: {
-    fontSize: 14,
-    color: "#666",
-    lineHeight: 1.7,
-    maxWidth: 380,
-  },
+  textarea: { background: "#111", border: "1px solid #222", borderRadius: 8, color: "#e8e8e0", fontFamily: "'JetBrains Mono', monospace", fontSize: 12, padding: "12px 16px", resize: "vertical", outline: "none", lineHeight: 1.6 },
+  input: { background: "#111", border: "1px solid #222", borderRadius: 8, color: "#e8e8e0", fontFamily: "'JetBrains Mono', monospace", fontSize: 12, padding: "12px 16px", outline: "none" },
+  select: { background: "#111", border: "1px solid #222", borderRadius: 8, color: "#e8e8e0", fontFamily: "'JetBrains Mono', monospace", fontSize: 12, padding: "12px 16px", outline: "none" },
+  privacyNote: { fontSize: 12, color: "#444", background: "#0d0d0d", border: "1px solid #1a1a1a", borderRadius: 6, padding: "10px 14px", fontFamily: "'JetBrains Mono', monospace" },
+  btnPrimary: { background: "#00ff88", color: "#0a0a0a", border: "none", borderRadius: 8, padding: "13px 24px", fontSize: 13, fontWeight: 700, fontFamily: "'Epilogue', sans-serif", cursor: "pointer", letterSpacing: "-0.3px" },
+  btnOutline: { background: "none", border: "1px solid #2a2a2a", color: "#888", borderRadius: 8, padding: "10px 18px", fontSize: 12, cursor: "pointer", fontFamily: "'JetBrains Mono', monospace" },
+  successWrap: { maxWidth: 480, margin: "80px auto", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: 16 },
+  successIcon: { width: 56, height: 56, borderRadius: "50%", background: "rgba(0,255,136,0.1)", border: "1px solid rgba(0,255,136,0.3)", color: "#00ff88", fontSize: 24, display: "flex", alignItems: "center", justifyContent: "center" },
+  successTitle: { fontSize: 28, fontWeight: 900, letterSpacing: "-1px", color: "#f0f0e8" },
+  successText: { fontSize: 14, color: "#666", lineHeight: 1.7, maxWidth: 380 },
 };
