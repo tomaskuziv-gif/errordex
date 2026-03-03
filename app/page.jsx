@@ -119,7 +119,279 @@ build:
     },
     related: ["gha-exit-137"],
   },
-];
+// ZKOPÍRUJ TYTO ZÁZNAMY A VLOŽ JE DO POLE FAILURES V page.jsx
+// Přidej je za poslední záznam, před uzavírací ]
+
+  {
+    id: "gha-npm-ci-frozen-lockfile",
+    errorString: "npm ci can only install packages when your package.json and package-lock.json or npm-shrinkwrap.json are in sync",
+    provider: "GitHub Actions",
+    runner: "ubuntu-22.04",
+    toolchain: "Node.js / npm",
+    severity: "high",
+    tags: ["npm", "lockfile", "package-lock", "ci"],
+    rootCause: "Your package.json was updated (new dependency added or version changed) but package-lock.json was not committed alongside it. npm ci is stricter than npm install — it requires both files to be perfectly in sync.",
+    fixSteps: [
+      "Run npm install locally to regenerate package-lock.json.",
+      "Commit both package.json and package-lock.json together.",
+      "Never edit package.json manually — always use npm install <package> so lockfile updates automatically.",
+      "Add a CI check: npm ci --dry-run to catch this before it reaches your pipeline.",
+    ],
+    reproduction: `# Fix: run locally and commit both files
+npm install
+git add package.json package-lock.json
+git commit -m "sync lockfile"
+git push`,
+    sponsored: null,
+    related: ["gha-exit-137", "gha-node-heap-exceeded"],
+  },
+  {
+    id: "gha-actions-checkout-permission",
+    errorString: "remote: Permission to repo.git denied to github-actions[bot]",
+    provider: "GitHub Actions",
+    runner: "ubuntu-22.04",
+    toolchain: "Git / GitHub Actions",
+    severity: "high",
+    tags: ["permissions", "github-actions", "token", "git", "push"],
+    rootCause: "The default GITHUB_TOKEN does not have write permissions to push back to the repository. This commonly happens when a workflow tries to commit generated files, bump versions, or update changelogs.",
+    fixSteps: [
+      "In your workflow file add permissions: contents: write at the top level.",
+      "Or pass the token explicitly: token: ${{ secrets.GITHUB_TOKEN }} to actions/checkout.",
+      "For cross-repo pushes you need a Personal Access Token (PAT) stored as a secret.",
+      "Check repo Settings → Actions → General → Workflow permissions — set to Read and write.",
+    ],
+    reproduction: `# .github/workflows/release.yml
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: \${{ secrets.GITHUB_TOKEN }}`,
+    sponsored: null,
+    related: ["gha-exit-137"],
+  },
+  {
+    id: "gha-docker-layer-cache-miss",
+    errorString: "importing cache manifest from ghcr.io: unexpected status code 401 Unauthorized",
+    provider: "GitHub Actions",
+    runner: "ubuntu-22.04",
+    toolchain: "Docker Buildx / GHCR",
+    severity: "medium",
+    tags: ["docker", "cache", "ghcr", "401", "registry", "buildx"],
+    rootCause: "Docker Buildx cannot authenticate to GitHub Container Registry (ghcr.io) when pulling the build cache. The GITHUB_TOKEN is not being passed to the registry login step, or the package visibility is set to private without proper auth.",
+    fixSteps: [
+      "Add a login step before the build: use docker/login-action@v3 with registry: ghcr.io.",
+      "Pass username: ${{ github.actor }} and password: ${{ secrets.GITHUB_TOKEN }}.",
+      "Make sure your package (image) visibility in GitHub Packages is set correctly.",
+      "Add permissions: packages: write to your workflow.",
+    ],
+    reproduction: `- name: Login to GHCR
+  uses: docker/login-action@v3
+  with:
+    registry: ghcr.io
+    username: \${{ github.actor }}
+    password: \${{ secrets.GITHUB_TOKEN }}
+
+- name: Build with cache
+  uses: docker/build-push-action@v5
+  with:
+    cache-from: type=registry,ref=ghcr.io/myorg/myapp:cache
+    cache-to: type=registry,ref=ghcr.io/myorg/myapp:cache,mode=max`,
+    sponsored: {
+      name: "Depot",
+      tagline: "Persistent Docker layer cache across all your CI runs — no registry setup needed.",
+      url: "#",
+    },
+    related: ["gha-exit-1-docker-buildx", "gha-exit-137"],
+  },
+  {
+    id: "gha-jest-timeout",
+    errorString: "Exceeded timeout of 5000 ms for a test.",
+    provider: "GitHub Actions",
+    runner: "ubuntu-22.04",
+    toolchain: "Node.js / Jest",
+    severity: "medium",
+    tags: ["jest", "timeout", "test", "async", "node"],
+    rootCause: "A Jest test is taking longer than the default 5 second timeout. On CI runners this is more common than locally because shared runners have less CPU, more I/O latency, and cold-start penalties for database or network connections.",
+    fixSteps: [
+      "Increase timeout for slow tests: jest.setTimeout(30000) at the top of the test file.",
+      "Mock external services instead of making real network calls in unit tests.",
+      "Check for missing await on async operations — an unawaited promise causes silent hangs.",
+      "Use --testTimeout=10000 flag globally in your jest config for all CI runs.",
+    ],
+    reproduction: `// jest.config.js
+module.exports = {
+  testTimeout: 10000, // 10s for CI
+};
+
+// or per-file
+beforeAll(() => {
+  jest.setTimeout(30000);
+});`,
+    sponsored: null,
+    related: ["gha-exit-137", "gha-node-heap-exceeded"],
+  },
+  {
+    id: "gitlab-runner-no-space",
+    errorString: "no space left on device",
+    provider: "GitLab CI",
+    runner: "gitlab-runner shell",
+    toolchain: "Docker / Any",
+    severity: "critical",
+    tags: ["disk", "space", "docker", "gitlab", "storage"],
+    rootCause: "The GitLab runner host has run out of disk space. Docker images, build artifacts, and npm/pip caches accumulate over time on self-hosted runners and are never automatically cleaned up.",
+    fixSteps: [
+      "Run docker system prune -af on the runner host to remove unused images and containers.",
+      "Clear GitLab runner cache: gitlab-runner cache-clear.",
+      "Add a scheduled CI job that runs docker system prune -af weekly.",
+      "Increase disk size of the runner host, or switch to ephemeral cloud runners.",
+    ],
+    reproduction: `# Add to .gitlab-ci.yml as a scheduled cleanup job
+cleanup:
+  script:
+    - docker system prune -af --volumes
+  only:
+    - schedules`,
+    sponsored: {
+      name: "BuildKite",
+      tagline: "Ephemeral cloud runners — fresh disk every build, no cleanup needed.",
+      url: "#",
+    },
+    related: ["gitlab-docker-daemon-not-running", "gha-exit-137"],
+  },
+  {
+    id: "gha-env-secret-empty",
+    errorString: "Error: Input required and not supplied: token",
+    provider: "GitHub Actions",
+    runner: "ubuntu-22.04",
+    toolchain: "GitHub Actions",
+    severity: "high",
+    tags: ["secrets", "env", "token", "input", "actions"],
+    rootCause: "A required input for an Action is empty. This almost always means a secret is not set in the repository, or it is set at the wrong level (org vs repo vs environment), or the secret name in the workflow has a typo.",
+    fixSteps: [
+      "Go to repo Settings → Secrets and variables → Actions and verify the secret exists.",
+      "Check the exact name — secret names are case-sensitive. MY_TOKEN is not the same as my_token.",
+      "If using environments (production/staging), make sure the secret is added to that specific environment.",
+      "Print available env vars with: env | grep -v SECRET to debug without exposing values.",
+    ],
+    reproduction: `# Check secret name matches exactly
+- name: Deploy
+  uses: some-action@v1
+  with:
+    token: \${{ secrets.MY_EXACT_SECRET_NAME }}
+    # Must match Settings → Secrets → Name`,
+    sponsored: null,
+    related: ["gha-actions-checkout-permission"],
+  },
+  {
+    id: "gha-python-pip-no-module",
+    errorString: "ModuleNotFoundError: No module named 'X'",
+    provider: "GitHub Actions",
+    runner: "ubuntu-22.04",
+    toolchain: "Python / pip",
+    severity: "medium",
+    tags: ["python", "pip", "module", "dependencies", "venv"],
+    rootCause: "A Python module is missing in the CI environment. Either it is not in requirements.txt, the wrong Python version is active, or pip install ran in a different virtual environment than the one running your code.",
+    fixSteps: [
+      "Make sure the missing package is listed in requirements.txt or pyproject.toml.",
+      "Use actions/setup-python and pin the exact Python version: python-version: '3.11'.",
+      "Always run pip install -r requirements.txt in the same step that runs your code.",
+      "Use pip freeze > requirements.txt locally to capture exact versions.",
+    ],
+    reproduction: `- uses: actions/setup-python@v5
+  with:
+    python-version: '3.11'
+    cache: 'pip'
+
+- name: Install dependencies
+  run: pip install -r requirements.txt
+
+- name: Run tests
+  run: pytest`,
+    sponsored: null,
+    related: ["gha-exit-137"],
+  },
+  {
+    id: "gha-artifact-not-found",
+    errorString: "Unable to find any artifacts for the associated workflow",
+    provider: "GitHub Actions",
+    runner: "ubuntu-22.04",
+    toolchain: "GitHub Actions",
+    severity: "medium",
+    tags: ["artifacts", "upload", "download", "workflow", "actions"],
+    rootCause: "A job is trying to download an artifact that was never uploaded, or was uploaded in a different workflow run. This commonly happens when an upload-artifact step was skipped due to a prior failure, or when artifact names don't match exactly.",
+    fixSteps: [
+      "Check that the upload-artifact step ran successfully in the producing job.",
+      "Verify the artifact name matches exactly between upload and download steps.",
+      "Add if: always() to upload-artifact if you want artifacts even when the job fails.",
+      "Artifacts expire after 90 days by default — check if you're referencing an old run.",
+    ],
+    reproduction: `# Producer job
+- uses: actions/upload-artifact@v4
+  with:
+    name: build-output   # must match exactly
+    path: ./dist
+
+# Consumer job
+- uses: actions/download-artifact@v4
+  with:
+    name: build-output   # must match exactly`,
+    sponsored: null,
+    related: ["gha-actions-checkout-permission", "gha-env-secret-empty"],
+  },
+  {
+    id: "gha-exit-code-1-eslint",
+    errorString: "ESLint found too many warnings (maximum: 0)",
+    provider: "GitHub Actions",
+    runner: "ubuntu-22.04",
+    toolchain: "Node.js / ESLint",
+    severity: "low",
+    tags: ["eslint", "lint", "warnings", "node", "quality"],
+    rootCause: "ESLint is configured with --max-warnings 0, meaning any warning fails the build. This is intentional in strict setups but often surprises teams after upgrading ESLint rules or adding new code.",
+    fixSteps: [
+      "Fix the actual warnings — run npx eslint . locally to see the full list.",
+      "If warnings are acceptable, change --max-warnings 0 to --max-warnings 10 in your script.",
+      "Use // eslint-disable-next-line rule-name to suppress specific intentional violations.",
+      "Upgrade your .eslintrc gradually — use 'warn' instead of 'error' for new rules during transition.",
+    ],
+    reproduction: `# package.json — remove --max-warnings 0 to allow warnings
+{
+  "scripts": {
+    "lint": "eslint . --max-warnings 10"
+  }
+}`,
+    sponsored: null,
+    related: ["gha-npm-ci-frozen-lockfile"],
+  },
+  {
+    id: "gha-timeout-job",
+    errorString: "The job running on runner GitHub Actions has exceeded the maximum execution time of 360 minutes.",
+    provider: "GitHub Actions",
+    runner: "ubuntu-22.04",
+    toolchain: "GitHub Actions",
+    severity: "critical",
+    tags: ["timeout", "hung", "infinite-loop", "ci", "actions"],
+    rootCause: "Your CI job hit the 6-hour GitHub Actions limit. This usually means a process is hanging waiting for input, an infinite loop in a script, a test that never resolves, or a deployment waiting for a confirmation that never comes.",
+    fixSteps: [
+      "Add timeout-minutes: 30 to your job to fail fast instead of waiting 6 hours.",
+      "Look for interactive prompts in scripts — add -y or --yes flags to commands like apt-get install.",
+      "Check for tests with missing done() callbacks or unresolved promises.",
+      "Use set -e in bash scripts so any failing command immediately exits.",
+    ],
+    reproduction: `jobs:
+  build:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30  # fail fast
+    steps:
+      - name: Install
+        run: apt-get install -y curl  # -y prevents interactive prompt`,
+    sponsored: null,
+    related: ["gha-jest-timeout", "gha-exit-137"],
+  },];
 
 const SEVERITY_META = {
   critical: { label: "CRITICAL", color: "#ff3b3b", bg: "rgba(255,59,59,0.1)" },
