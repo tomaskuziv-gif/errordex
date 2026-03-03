@@ -135,7 +135,7 @@ const PROVIDER_COLORS = {
 
 export default function ErrorDex() {
   const [view, setView] = useState("home"); // home | entry | submit | submitted
-  const [selectedId, setSelectedId] = useState(null);
+ const [selectedId, setSelectedId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [submitForm, setSubmitForm] = useState({ error: "", provider: "", runner: "", toolchain: "" });
   const [activeFilter, setActiveFilter] = useState("all");
