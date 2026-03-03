@@ -393,12 +393,13 @@ cleanup:
     related: ["gha-jest-timeout", "gha-exit-137"],
   },];
 
+
 const SEVERITY_META = {
   critical: { label: "CRITICAL", color: "#ff3b3b", bg: "rgba(255,59,59,0.1)" },
   high: { label: "HIGH", color: "#ff8c00", bg: "rgba(255,140,0,0.1)" },
   medium: { label: "MEDIUM", color: "#f5c400", bg: "rgba(245,196,0,0.1)" },
+  low: { label: "LOW", color: "#00ff88", bg: "rgba(0,255,136,0.1)" },
 };
-
 const PROVIDER_COLORS = {
   "GitHub Actions": "#58a6ff",
   "GitLab CI": "#fc6d26",
