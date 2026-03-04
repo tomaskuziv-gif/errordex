@@ -687,7 +687,14 @@ export default function ErrorDex() {
               <button
                 style={{ ...styles.btnPrimary, opacity: submitForm.error && submitForm.provider ? 1 : 0.4 }}
                 disabled={!submitForm.error || !submitForm.provider}
-                onClick={() => setView("submitted")}
+       onClick={async () => {
+  await fetch("https://formspree.io/f/mzdanqeb", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(submitForm),
+  });
+  setView("submitted");
+}}
               >
                 Submit for review →
               </button>
