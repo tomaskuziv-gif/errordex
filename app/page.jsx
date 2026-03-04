@@ -391,6 +391,702 @@ cleanup:
         run: apt-get install -y curl  # -y prevents interactive prompt`,
     sponsored: null,
     related: ["gha-jest-timeout", "gha-exit-137"],
+  },// ZKOPÍRUJ TYTO ZÁZNAMY A VLOŽ JE DO POLE FAILURES V page.jsx
+// Přidej je za poslední záznam, před uzavírací ]
+
+  {
+    id: "gha-yarn-frozen-lockfile",
+    errorString: "Your lockfile needs to be updated, but yarn was run with --frozen-lockfile.",
+    provider: "GitHub Actions",
+    runner: "ubuntu-22.04",
+    toolchain: "Node.js / Yarn",
+    severity: "high",
+    tags: ["yarn", "lockfile", "frozen", "dependencies"],
+    rootCause: "yarn.lock is out of sync with package.json. Yarn CI mode requires a perfect match. This happens when someone adds a package locally but forgets to commit the updated yarn.lock.",
+    fixSteps: [
+      "Run yarn install locally to regenerate yarn.lock.",
+      "Commit both package.json and yarn.lock together.",
+      "Never edit package.json manually — use yarn add <package>.",
+      "Add a pre-commit hook with husky to enforce lockfile sync.",
+    ],
+    reproduction: `# Fix locally
+yarn install
+git add package.json yarn.lock
+git commit -m "sync yarn lockfile"
+git push`,
+    sponsored: null,
+    related: ["gha-npm-ci-frozen-lockfile", "gha-node-heap-exceeded"],
+  },
+  {
+    id: "gha-pnpm-frozen-lockfile",
+    errorString: "ERR_PNPM_OUTDATED_LOCKFILE  Cannot install with frozen-lockfile because pnpm-lock.yaml is not up-to-date with package.json",
+    provider: "GitHub Actions",
+    runner: "ubuntu-22.04",
+    toolchain: "Node.js / pnpm",
+    severity: "high",
+    tags: ["pnpm", "lockfile", "frozen", "dependencies"],
+    rootCause: "pnpm-lock.yaml is out of sync with package.json. pnpm ci mode (--frozen-lockfile) requires exact match. Common cause: dependency added or version bumped without committing the updated lockfile.",
+    fixSteps: [
+      "Run pnpm install locally to regenerate pnpm-lock.yaml.",
+      "Commit both package.json and pnpm-lock.yaml.",
+      "Use pnpm add <package> instead of editing package.json manually.",
+      "In CI use: pnpm install --frozen-lockfile only after verifying lockfile is committed.",
+    ],
+    reproduction: `- uses: pnpm/action-setup@v3
+  with:
+    version: 8
+
+- name: Install
+  run: pnpm install --frozen-lockfile`,
+    sponsored: null,
+    related: ["gha-npm-ci-frozen-lockfile", "gha-yarn-frozen-lockfile"],
+  },
+  {
+    id: "gha-docker-buildx-not-setup",
+    errorString: "ERROR: docker buildx is not a docker command",
+    provider: "GitHub Actions",
+    runner: "ubuntu-22.04",
+    toolchain: "Docker Buildx",
+    severity: "high",
+    tags: ["docker", "buildx", "setup", "multiplatform"],
+    rootCause: "Docker Buildx is not initialized on the runner. The default Docker installation on GitHub Actions runners does not always have Buildx enabled by default, especially for multi-platform builds.",
+    fixSteps: [
+      "Add docker/setup-buildx-action@v3 before your build step.",
+      "This is always required when using docker/build-push-action.",
+      "For multi-platform builds also add docker/setup-qemu-action@v3.",
+    ],
+    reproduction: `- name: Set up Docker Buildx
+  uses: docker/setup-buildx-action@v3
+
+- name: Build
+  uses: docker/build-push-action@v5
+  with:
+    push: false`,
+    sponsored: {
+      name: "Depot",
+      tagline: "Drop-in Buildx replacement with persistent cache and 2x faster builds.",
+      url: "#",
+    },
+    related: ["gha-exit-1-docker-buildx", "gha-docker-layer-cache-miss"],
+  },
+  {
+    id: "gha-node-version-mismatch",
+    errorString: "The engine node is incompatible with this module. Expected version >= 18. Got 16.",
+    provider: "GitHub Actions",
+    runner: "ubuntu-22.04",
+    toolchain: "Node.js / npm",
+    severity: "medium",
+    tags: ["node", "version", "engine", "compatibility"],
+    rootCause: "The Node.js version on the runner is lower than what the package requires in its engines field. GitHub Actions runners ship with a default Node version that may be older than your project needs.",
+    fixSteps: [
+      "Add actions/setup-node to your workflow and pin the version.",
+      "Match the Node version in CI to your .nvmrc or .node-version file.",
+      "Use node-version-file: '.nvmrc' to automatically read from your config file.",
+    ],
+    reproduction: `- uses: actions/setup-node@v4
+  with:
+    node-version: '20'
+    cache: 'npm'
+
+- run: npm ci`,
+    sponsored: null,
+    related: ["gha-npm-ci-frozen-lockfile", "gha-node-heap-exceeded"],
+  },
+  {
+    id: "gha-missing-env-variable",
+    errorString: "Error: ENOENT: no such file or directory, open '.env'",
+    provider: "GitHub Actions",
+    runner: "ubuntu-22.04",
+    toolchain: "Node.js / Any",
+    severity: "medium",
+    tags: ["env", "dotenv", "environment", "config", "secrets"],
+    rootCause: "Your app tries to load a .env file that does not exist in CI. The .env file is correctly in .gitignore (as it should be) so it never reaches the runner. CI needs environment variables set directly.",
+    fixSteps: [
+      "Add each required variable as a GitHub Actions secret.",
+      "Reference them in your workflow with env: MY_VAR: ${{ secrets.MY_VAR }}.",
+      "Never commit .env files — use secrets for sensitive values.",
+      "Use a .env.example file to document required variables for new developers.",
+    ],
+    reproduction: `jobs:
+  build:
+    runs-on: ubuntu-22.04
+    env:
+      DATABASE_URL: \${{ secrets.DATABASE_URL }}
+      API_KEY: \${{ secrets.API_KEY }}
+    steps:
+      - run: npm run build`,
+    sponsored: null,
+    related: ["gha-env-secret-empty", "gha-actions-checkout-permission"],
+  },
+  {
+    id: "gha-port-already-in-use",
+    errorString: "Error: listen EADDRINUSE: address already in use :::3000",
+    provider: "GitHub Actions",
+    runner: "ubuntu-22.04",
+    toolchain: "Node.js / Express",
+    severity: "medium",
+    tags: ["port", "eaddrinuse", "node", "server", "e2e"],
+    rootCause: "A previous test or step started a server on port 3000 and it was never shut down. When the next step tries to start on the same port, it fails. Common in e2e test setups with Playwright or Cypress.",
+    fixSteps: [
+      "Kill the process after tests: kill $(lsof -t -i:3000) in a post step.",
+      "Use a different port for each parallel job with PORT env variable.",
+      "Use wait-on package to properly manage server startup and shutdown.",
+      "Add if: always() to your cleanup step so it runs even when tests fail.",
+    ],
+    reproduction: `- name: Start server
+  run: npm start &
+  
+- name: Run tests
+  run: npm test
+
+- name: Stop server
+  if: always()
+  run: kill $(lsof -t -i:3000) || true`,
+    sponsored: null,
+    related: ["gha-jest-timeout", "gha-exit-137"],
+  },
+  {
+    id: "gha-checkout-lfs",
+    errorString: "Encountered X file(s) that should have been pointers, but weren't",
+    provider: "GitHub Actions",
+    runner: "ubuntu-22.04",
+    toolchain: "Git LFS / GitHub Actions",
+    severity: "medium",
+    tags: ["git", "lfs", "large-files", "checkout", "binary"],
+    rootCause: "Your repository uses Git LFS for large files but actions/checkout does not download LFS objects by default. The files exist as LFS pointers instead of actual content.",
+    fixSteps: [
+      "Add lfs: true to your actions/checkout step.",
+      "Make sure git-lfs is installed on the runner — it is on GitHub-hosted runners by default.",
+      "For self-hosted runners: apt-get install git-lfs && git lfs install.",
+    ],
+    reproduction: `- uses: actions/checkout@v4
+  with:
+    lfs: true  # add this line`,
+    sponsored: null,
+    related: ["gha-actions-checkout-permission"],
+  },
+  {
+    id: "gha-terraform-state-lock",
+    errorString: "Error acquiring the state lock: ConditionalCheckFailedException",
+    provider: "GitHub Actions",
+    runner: "ubuntu-22.04",
+    toolchain: "Terraform / AWS",
+    severity: "critical",
+    tags: ["terraform", "state", "lock", "aws", "dynamodb"],
+    rootCause: "A previous Terraform run failed or was cancelled without releasing the state lock in DynamoDB. Terraform locks state to prevent concurrent modifications, but crashes leave the lock orphaned.",
+    fixSteps: [
+      "Run terraform force-unlock <LOCK_ID> — the lock ID is shown in the error message.",
+      "Check if another pipeline is actually running — do not force-unlock a live run.",
+      "Add -lock-timeout=5m to your terraform plan/apply commands.",
+      "Consider using -lock=false only in read-only plan steps, never in apply.",
+    ],
+    reproduction: `# Unlock orphaned state
+terraform force-unlock <LOCK_ID_FROM_ERROR>
+
+# Prevent future issues
+- name: Terraform Apply
+  run: terraform apply -auto-approve -lock-timeout=5m`,
+    sponsored: null,
+    related: ["gha-env-secret-empty", "gha-missing-env-variable"],
+  },
+  {
+    id: "gha-jest-cannot-find-module",
+    errorString: "Cannot find module '@/components/Button' from 'src/App.test.js'",
+    provider: "GitHub Actions",
+    runner: "ubuntu-22.04",
+    toolchain: "Node.js / Jest",
+    severity: "medium",
+    tags: ["jest", "module", "alias", "path", "typescript"],
+    rootCause: "Jest cannot resolve path aliases like @/ that are configured in tsconfig.json or webpack. Jest uses its own module resolver and does not read tsconfig paths by default.",
+    fixSteps: [
+      "Add moduleNameMapper to jest.config.js to map @/ to the src directory.",
+      "Install babel-plugin-module-resolver or ts-jest if using TypeScript.",
+      "Make sure jest.config.js paths match your tsconfig.json paths exactly.",
+    ],
+    reproduction: `// jest.config.js
+module.exports = {
+  moduleNameMapper: {
+    '^@/(.*)$': '<rootDir>/src/$1',
+  },
+};`,
+    sponsored: null,
+    related: ["gha-jest-timeout", "gha-python-pip-no-module"],
+  },
+  {
+    id: "gha-aws-credentials-missing",
+    errorString: "NoCredentialProviders: no valid providers in chain",
+    provider: "GitHub Actions",
+    runner: "ubuntu-22.04",
+    toolchain: "AWS CLI / Terraform",
+    severity: "critical",
+    tags: ["aws", "credentials", "iam", "secrets", "cloud"],
+    rootCause: "AWS CLI or SDK cannot find valid credentials on the runner. The credentials are not configured as environment variables or the aws-actions/configure-aws-credentials step is missing.",
+    fixSteps: [
+      "Add aws-actions/configure-aws-credentials@v4 before any AWS steps.",
+      "Store AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY as GitHub secrets.",
+      "For better security use OIDC with role-to-assume instead of long-lived keys.",
+      "Never hardcode credentials in your workflow files.",
+    ],
+    reproduction: `- name: Configure AWS credentials
+  uses: aws-actions/configure-aws-credentials@v4
+  with:
+    aws-access-key-id: \${{ secrets.AWS_ACCESS_KEY_ID }}
+    aws-secret-access-key: \${{ secrets.AWS_SECRET_ACCESS_KEY }}
+    aws-region: eu-west-1`,
+    sponsored: null,
+    related: ["gha-env-secret-empty", "gha-missing-env-variable"],
+  },
+  {
+    id: "gha-playwright-browser-missing",
+    errorString: "browserType.launch: Executable doesn't exist at /root/.cache/ms-playwright/chromium",
+    provider: "GitHub Actions",
+    runner: "ubuntu-22.04",
+    toolchain: "Node.js / Playwright",
+    severity: "high",
+    tags: ["playwright", "browser", "e2e", "chromium", "test"],
+    rootCause: "Playwright browsers are not installed on the runner. Unlike local development where you run npx playwright install once, CI runners start fresh every time and need browsers installed in each run.",
+    fixSteps: [
+      "Add npx playwright install --with-deps before running tests.",
+      "Cache the browser installation to speed up runs: cache key on playwright version.",
+      "Use the official Playwright Docker image for consistent browser versions.",
+    ],
+    reproduction: `- name: Install Playwright browsers
+  run: npx playwright install --with-deps chromium
+
+- name: Run e2e tests
+  run: npx playwright test`,
+    sponsored: null,
+    related: ["gha-jest-timeout", "gha-port-already-in-use"],
+  },
+  {
+    id: "gha-cypress-video-artifact",
+    errorString: "Could not process video. No frames were recorded.",
+    provider: "GitHub Actions",
+    runner: "ubuntu-22.04",
+    toolchain: "Node.js / Cypress",
+    severity: "low",
+    tags: ["cypress", "video", "e2e", "recording", "display"],
+    rootCause: "Cypress video recording fails on CI because there is no display server. The runner has no GUI environment so video frames cannot be captured.",
+    fixSteps: [
+      "Disable video recording in CI: add video: false to cypress.config.js.",
+      "Or use a virtual display: install xvfb and run with: xvfb-run cypress run.",
+      "Screenshots on failure still work without video — usually sufficient for debugging.",
+    ],
+    reproduction: `// cypress.config.js
+module.exports = {
+  video: false, // disable in CI
+  screenshotOnRunFailure: true,
+};`,
+    sponsored: null,
+    related: ["gha-playwright-browser-missing", "gha-port-already-in-use"],
+  },
+  {
+    id: "gha-python-version-mismatch",
+    errorString: "SyntaxError: f-string expression part cannot include a backslash",
+    provider: "GitHub Actions",
+    runner: "ubuntu-22.04",
+    toolchain: "Python",
+    severity: "medium",
+    tags: ["python", "version", "fstring", "syntax", "compatibility"],
+    rootCause: "This syntax was invalid in Python 3.11 and earlier but is valid in Python 3.12+. The runner is using an older Python version than expected. Ubuntu 22.04 ships with Python 3.10 by default.",
+    fixSteps: [
+      "Add actions/setup-python and pin to python-version: '3.12'.",
+      "Add a .python-version file to your repo and use python-version-file: '.python-version'.",
+      "Test locally with the same Python version as CI.",
+    ],
+    reproduction: `- uses: actions/setup-python@v5
+  with:
+    python-version: '3.12'
+    cache: 'pip'`,
+    sponsored: null,
+    related: ["gha-python-pip-no-module"],
+  },
+  {
+    id: "gha-docker-compose-version",
+    errorString: "docker-compose: command not found",
+    provider: "GitHub Actions",
+    runner: "ubuntu-22.04",
+    toolchain: "Docker Compose",
+    severity: "medium",
+    tags: ["docker", "compose", "v2", "command", "plugin"],
+    rootCause: "GitHub Actions runners have Docker Compose V2 installed as a plugin (docker compose) not as a standalone binary (docker-compose). The hyphenated command was removed in newer versions.",
+    fixSteps: [
+      "Replace docker-compose with docker compose (no hyphen) in all your scripts.",
+      "Or install the standalone binary: pip install docker-compose.",
+      "Update any Makefile targets or scripts that use the old command.",
+    ],
+    reproduction: `# Old (broken on newer runners)
+docker-compose up -d
+
+# New (correct)
+docker compose up -d`,
+    sponsored: null,
+    related: ["gitlab-docker-daemon-not-running", "gha-exit-1-docker-buildx"],
+  },
+  {
+    id: "gha-gradle-oom",
+    errorString: "GC overhead limit exceeded / Java heap space",
+    provider: "GitHub Actions",
+    runner: "ubuntu-22.04",
+    toolchain: "Java / Gradle",
+    severity: "critical",
+    tags: ["java", "gradle", "heap", "memory", "oom"],
+    rootCause: "The Gradle build daemon ran out of Java heap memory. GitHub Actions runners have limited RAM and Gradle's default heap size is often too small for large projects.",
+    fixSteps: [
+      "Add org.gradle.jvmargs=-Xmx4g to gradle.properties.",
+      "Enable Gradle parallel builds: org.gradle.parallel=true.",
+      "Use actions/cache to cache ~/.gradle to avoid re-downloading dependencies.",
+      "Consider splitting the build into modules.",
+    ],
+    reproduction: `# gradle.properties
+org.gradle.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=512m
+org.gradle.parallel=true
+org.gradle.caching=true`,
+    sponsored: null,
+    related: ["gha-exit-137", "gha-node-heap-exceeded"],
+  },
+  {
+    id: "gha-maven-dependency-resolve",
+    errorString: "Could not resolve dependencies for project: Artifact X:Y:Z:jar not found",
+    provider: "GitHub Actions",
+    runner: "ubuntu-22.04",
+    toolchain: "Java / Maven",
+    severity: "high",
+    tags: ["java", "maven", "dependencies", "artifactory", "repository"],
+    rootCause: "Maven cannot download a dependency from the remote repository. Usually caused by a private Artifactory or Nexus repository requiring authentication, or a transient network issue on the runner.",
+    fixSteps: [
+      "Add repository credentials to ~/.m2/settings.xml via a CI step.",
+      "Use actions/cache to cache ~/.m2/repository to avoid re-downloading.",
+      "For private repos: inject credentials from secrets into settings.xml.",
+      "Retry transient failures with: mvn --fail-at-end.",
+    ],
+    reproduction: `- name: Set up Maven settings
+  run: |
+    mkdir -p ~/.m2
+    echo "<settings><servers><server>
+      <id>artifactory</id>
+      <username>\${{ secrets.ARTIFACTORY_USER }}</username>
+      <password>\${{ secrets.ARTIFACTORY_TOKEN }}</password>
+    </server></servers></settings>" > ~/.m2/settings.xml`,
+    sponsored: null,
+    related: ["gha-npm-ci-frozen-lockfile", "gha-python-pip-no-module"],
+  },
+  {
+    id: "gitlab-pipeline-stuck-pending",
+    errorString: "This job is stuck because the project doesn't have any runners online assigned to it.",
+    provider: "GitLab CI",
+    runner: "gitlab-runner",
+    toolchain: "GitLab CI",
+    severity: "critical",
+    tags: ["gitlab", "runner", "pending", "stuck", "registration"],
+    rootCause: "No GitLab runner is available to pick up the job. Either the runner is offline, unregistered, or the runner tags do not match the tags required by the job.",
+    fixSteps: [
+      "Check runner status in Settings → CI/CD → Runners.",
+      "Restart the runner service: sudo systemctl restart gitlab-runner.",
+      "Remove tags from the job or add matching tags to the runner.",
+      "For shared runners: make sure they are enabled for your project.",
+    ],
+    reproduction: `# .gitlab-ci.yml — remove tags if not needed
+build:
+  # tags:
+  #   - docker  # comment this out if no tagged runner available
+  script:
+    - echo "building"`,
+    sponsored: {
+      name: "BuildKite",
+      tagline: "Always-on elastic runners — never wait for an available agent again.",
+      url: "#",
+    },
+    related: ["gitlab-docker-daemon-not-running", "gitlab-runner-no-space"],
+  },
+  {
+    id: "gha-ssh-key-permission-denied",
+    errorString: "Permission denied (publickey). fatal: Could not read from remote repository.",
+    provider: "GitHub Actions",
+    runner: "ubuntu-22.04",
+    toolchain: "Git / SSH",
+    severity: "high",
+    tags: ["ssh", "git", "permission", "deploy-key", "clone"],
+    rootCause: "The SSH key used by the runner does not have access to the repository being cloned. This happens with private submodules or when cloning a different repo than the one running the workflow.",
+    fixSteps: [
+      "Add a deploy key to the target repository with read access.",
+      "Store the private key as a GitHub secret.",
+      "Add a step to configure SSH: use webfactory/ssh-agent action.",
+      "For submodules use: actions/checkout with submodules: recursive and ssh-key secret.",
+    ],
+    reproduction: `- uses: webfactory/ssh-agent@v0.9.0
+  with:
+    ssh-private-key: \${{ secrets.SSH_PRIVATE_KEY }}
+
+- uses: actions/checkout@v4
+  with:
+    submodules: recursive`,
+    sponsored: null,
+    related: ["gha-actions-checkout-permission", "gha-env-secret-empty"],
+  },
+  {
+    id: "gha-codecov-upload-fail",
+    errorString: "There was an error running the uploader: Error: No coverage reports found.",
+    provider: "GitHub Actions",
+    runner: "ubuntu-22.04",
+    toolchain: "Node.js / Codecov",
+    severity: "low",
+    tags: ["codecov", "coverage", "upload", "report", "test"],
+    rootCause: "Codecov uploader cannot find a coverage report file. Either the test runner did not generate a coverage report, the file is in a non-default location, or the tests failed before coverage was written.",
+    fixSteps: [
+      "Make sure tests run with coverage flag: jest --coverage or pytest --cov.",
+      "Specify the coverage file path explicitly in the Codecov action.",
+      "Ensure the coverage step runs even if tests fail using if: always().",
+      "Check that the coverage output format matches what Codecov expects (lcov, xml, etc.).",
+    ],
+    reproduction: `- name: Run tests with coverage
+  run: jest --coverage --coverageReporters=lcov
+
+- name: Upload coverage
+  uses: codecov/codecov-action@v4
+  with:
+    files: ./coverage/lcov.info
+    token: \${{ secrets.CODECOV_TOKEN }}`,
+    sponsored: null,
+    related: ["gha-jest-timeout", "gha-jest-cannot-find-module"],
+  },
+  {
+    id: "gha-kubernetes-kubectl-auth",
+    errorString: "error: You must be logged in to the server (Unauthorized)",
+    provider: "GitHub Actions",
+    runner: "ubuntu-22.04",
+    toolchain: "Kubernetes / kubectl",
+    severity: "critical",
+    tags: ["kubernetes", "kubectl", "auth", "kubeconfig", "deploy"],
+    rootCause: "kubectl cannot authenticate to the Kubernetes cluster. The kubeconfig is missing, expired, or the service account token does not have sufficient permissions.",
+    fixSteps: [
+      "Store your kubeconfig as a base64-encoded GitHub secret.",
+      "Decode and write it in a CI step: echo $KUBECONFIG_B64 | base64 -d > ~/.kube/config.",
+      "For EKS use aws eks update-kubeconfig in the workflow.",
+      "For GKE use gke-gcloud-auth-plugin and google-github-actions/get-gke-credentials.",
+    ],
+    reproduction: `- name: Set up kubeconfig
+  run: |
+    mkdir -p ~/.kube
+    echo "\${{ secrets.KUBECONFIG_B64 }}" | base64 -d > ~/.kube/config
+
+- name: Deploy
+  run: kubectl apply -f k8s/`,
+    sponsored: null,
+    related: ["gha-aws-credentials-missing", "gha-env-secret-empty"],
+  },
+  {
+    id: "gha-ruby-bundler-fail",
+    errorString: "Your bundle is locked to <gem> but that version could not be found in any of the sources.",
+    provider: "GitHub Actions",
+    runner: "ubuntu-22.04",
+    toolchain: "Ruby / Bundler",
+    severity: "high",
+    tags: ["ruby", "bundler", "gemfile", "lockfile", "gems"],
+    rootCause: "Gemfile.lock references a gem version that no longer exists on RubyGems or in your private gem source. This often happens after a gem is yanked from RubyGems or a private Gemfury source changes.",
+    fixSteps: [
+      "Run bundle update <gem-name> locally to get a valid version.",
+      "Commit the updated Gemfile.lock.",
+      "Use bundle config set --local frozen false in CI if you need flexible resolution.",
+      "Pin gems to version ranges instead of exact versions to avoid yanked-gem issues.",
+    ],
+    reproduction: `- uses: ruby/setup-ruby@v1
+  with:
+    ruby-version: '3.3'
+    bundler-cache: true  # runs bundle install automatically`,
+    sponsored: null,
+    related: ["gha-npm-ci-frozen-lockfile", "gha-yarn-frozen-lockfile"],
+  },
+  {
+    id: "gha-go-module-private",
+    errorString: "verifying module: checksum mismatch / GONOSUMCHECK",
+    provider: "GitHub Actions",
+    runner: "ubuntu-22.04",
+    toolchain: "Go / Go Modules",
+    severity: "high",
+    tags: ["go", "modules", "private", "gosum", "goprivate"],
+    rootCause: "Go module checksum verification fails for private modules. The Go checksum database (sum.golang.org) cannot verify private repositories, causing the build to fail when GONOSUMCHECK or GOPRIVATE is not configured.",
+    fixSteps: [
+      "Set GOPRIVATE=github.com/yourorg/* in your workflow environment.",
+      "Set GONOSUMCHECK=github.com/yourorg/* to skip checksum for private modules.",
+      "Configure GOAUTH or GONOSUMDB for private module authentication.",
+      "Store the git credentials and configure them before go mod download.",
+    ],
+    reproduction: `- name: Set Go private module config
+  env:
+    GOPRIVATE: github.com/myorg/*
+    GONOSUMCHECK: github.com/myorg/*
+  run: go mod download`,
+    sponsored: null,
+    related: ["gha-ssh-key-permission-denied", "gha-aws-credentials-missing"],
+  },
+  {
+    id: "gha-cache-restore-fail",
+    errorString: "Cache not found for input keys:",
+    provider: "GitHub Actions",
+    runner: "ubuntu-22.04",
+    toolchain: "GitHub Actions",
+    severity: "low",
+    tags: ["cache", "actions", "restore", "miss", "performance"],
+    rootCause: "The cache key does not match any existing cache. This is normal on first run or after changing the cache key. It is not an error — the build will proceed without cache, just slower.",
+    fixSteps: [
+      "This is expected behavior on first run — not a real error.",
+      "Use a fallback restore-keys to hit partial cache matches.",
+      "Make sure your cache key includes the lockfile hash for best hit rate.",
+      "Do not fail the workflow on cache miss — it is normal.",
+    ],
+    reproduction: `- uses: actions/cache@v4
+  with:
+    path: ~/.npm
+    key: \${{ runner.os }}-node-\${{ hashFiles('**/package-lock.json') }}
+    restore-keys: |
+      \${{ runner.os }}-node-`,
+    sponsored: null,
+    related: ["gha-npm-ci-frozen-lockfile", "gha-exit-137"],
+  },
+  {
+    id: "gha-sonarqube-quality-gate",
+    errorString: "ERROR: SONAR_TOKEN is not set. Please set the SONAR_TOKEN environment variable.",
+    provider: "GitHub Actions",
+    runner: "ubuntu-22.04",
+    toolchain: "SonarQube / SonarCloud",
+    severity: "medium",
+    tags: ["sonarqube", "sonarcloud", "quality", "token", "static-analysis"],
+    rootCause: "The SonarQube or SonarCloud scanner requires a SONAR_TOKEN to authenticate with the server. The token is missing from the runner environment.",
+    fixSteps: [
+      "Generate a token in SonarCloud: My Account → Security → Generate Token.",
+      "Add it as a GitHub secret named SONAR_TOKEN.",
+      "Reference it in your workflow: SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}.",
+    ],
+    reproduction: `- name: SonarCloud Scan
+  uses: SonarSource/sonarcloud-github-action@master
+  env:
+    GITHUB_TOKEN: \${{ secrets.GITHUB_TOKEN }}
+    SONAR_TOKEN: \${{ secrets.SONAR_TOKEN }}`,
+    sponsored: null,
+    related: ["gha-env-secret-empty", "gha-codecov-upload-fail"],
+  },
+  {
+    id: "gha-gh-pages-deploy-fail",
+    errorString: "remote: Permission to user/repo.git denied to github-actions[bot].",
+    provider: "GitHub Actions",
+    runner: "ubuntu-22.04",
+    toolchain: "GitHub Pages",
+    severity: "high",
+    tags: ["github-pages", "deploy", "permissions", "token", "pages"],
+    rootCause: "The workflow does not have permission to push to the gh-pages branch. GitHub Actions bot is denied write access because the workflow permissions are set to read-only.",
+    fixSteps: [
+      "Add permissions: pages: write and id-token: write to your workflow.",
+      "Use the official actions/deploy-pages action instead of manual git push.",
+      "In repo Settings → Actions → General → set Workflow permissions to Read and write.",
+    ],
+    reproduction: `permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+- name: Deploy to GitHub Pages
+  uses: actions/deploy-pages@v4`,
+    sponsored: null,
+    related: ["gha-actions-checkout-permission", "gha-env-secret-empty"],
+  },
+  {
+    id: "gha-trivy-scan-fail",
+    errorString: "FATAL: error in image scan: failed to initialize source: GET https://ghcr.io/v2/: UNAUTHORIZED",
+    provider: "GitHub Actions",
+    runner: "ubuntu-22.04",
+    toolchain: "Trivy / Container Security",
+    severity: "medium",
+    tags: ["trivy", "security", "scan", "container", "ghcr", "401"],
+    rootCause: "Trivy cannot pull the container image to scan because it is not authenticated to the registry. The image is in a private registry (ghcr.io or ECR) and no credentials are passed to the scanner.",
+    fixSteps: [
+      "Log in to the registry before running Trivy.",
+      "Pass the image-ref after docker pull so Trivy scans the local image.",
+      "Use trivy image --input image.tar to scan a local tarball instead.",
+    ],
+    reproduction: `- name: Login to GHCR
+  uses: docker/login-action@v3
+  with:
+    registry: ghcr.io
+    username: \${{ github.actor }}
+    password: \${{ secrets.GITHUB_TOKEN }}
+
+- name: Run Trivy scan
+  uses: aquasecurity/trivy-action@master
+  with:
+    image-ref: ghcr.io/myorg/myapp:latest`,
+    sponsored: null,
+    related: ["gha-docker-layer-cache-miss", "gha-aws-credentials-missing"],
+  },
+  {
+    id: "gha-matrix-strategy-fail-fast",
+    errorString: "Some jobs were cancelled due to fail-fast strategy.",
+    provider: "GitHub Actions",
+    runner: "ubuntu-22.04",
+    toolchain: "GitHub Actions",
+    severity: "low",
+    tags: ["matrix", "fail-fast", "strategy", "parallel", "cancelled"],
+    rootCause: "When using matrix builds, GitHub Actions cancels all remaining matrix jobs as soon as one fails. This is the default fail-fast: true behavior. It saves CI minutes but makes it hard to see failures across all matrix combinations.",
+    fixSteps: [
+      "Add fail-fast: false to your matrix strategy to run all combinations.",
+      "Use this when you need to see failures across all Node/OS/Python versions at once.",
+      "Keep fail-fast: true for expensive builds where you want to save CI minutes.",
+    ],
+    reproduction: `jobs:
+  test:
+    strategy:
+      fail-fast: false  # run all matrix jobs even if one fails
+      matrix:
+        node: [18, 20, 22]
+        os: [ubuntu-22.04, windows-latest]`,
+    sponsored: null,
+    related: ["gha-jest-timeout", "gha-node-version-mismatch"],
+  },
+  {
+    id: "gha-permissions-denied-chmod",
+    errorString: "Permission denied: './scripts/deploy.sh'",
+    provider: "GitHub Actions",
+    runner: "ubuntu-22.04",
+    toolchain: "Bash / Shell",
+    severity: "medium",
+    tags: ["permissions", "chmod", "shell", "script", "bash"],
+    rootCause: "A shell script is not executable. When files are committed to Git without the executable bit set, they lose their permissions. On checkout the file exists but cannot be run directly.",
+    fixSteps: [
+      "Add chmod +x scripts/deploy.sh before running the script.",
+      "Or run it with bash explicitly: bash scripts/deploy.sh.",
+      "Fix permanently: git update-index --chmod=+x scripts/deploy.sh and commit.",
+    ],
+    reproduction: `# Option 1: chmod in CI
+- run: chmod +x scripts/deploy.sh && ./scripts/deploy.sh
+
+# Option 2: fix in git permanently  
+git update-index --chmod=+x scripts/deploy.sh
+git commit -m "fix script permissions"`,
+    sponsored: null,
+    related: ["gha-actions-checkout-permission", "gha-ssh-key-permission-denied"],
+  },
+  {
+    id: "gha-vercel-deploy-fail",
+    errorString: "Error: No existing credentials found. Please run vercel login.",
+    provider: "GitHub Actions",
+    runner: "ubuntu-22.04",
+    toolchain: "Vercel / Next.js",
+    severity: "high",
+    tags: ["vercel", "deploy", "token", "nextjs", "credentials"],
+    rootCause: "The Vercel CLI on the runner has no authentication token. Vercel deployments from CI require a VERCEL_TOKEN secret — the CLI cannot use browser-based OAuth in a headless environment.",
+    fixSteps: [
+      "Generate a Vercel token: vercel.com → Settings → Tokens → Create.",
+      "Add it as a GitHub secret: VERCEL_TOKEN.",
+      "Also add VERCEL_ORG_ID and VERCEL_PROJECT_ID from your .vercel/project.json.",
+      "Use the official Vercel GitHub integration for zero-config deployments instead.",
+    ],
+    reproduction: `- name: Deploy to Vercel
+  run: vercel --prod --token=\${{ secrets.VERCEL_TOKEN }}
+  env:
+    VERCEL_ORG_ID: \${{ secrets.VERCEL_ORG_ID }}
+    VERCEL_PROJECT_ID: \${{ secrets.VERCEL_PROJECT_ID }}`,
+    sponsored: null,
+    related: ["gha-env-secret-empty", "gha-gh-pages-deploy-fail"],
   },];
 
 
