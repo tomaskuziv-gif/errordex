@@ -16,7 +16,7 @@ export const metadata = {
   title: "Errordex — CI/CD Failure Encyclopedia",
   description: "Find fixes for exact CI/CD error strings. Indexed by runner, toolchain, and provider. Built for engineers debugging at 2am.",
   verification: {
-    google:<meta name="google-site-verification" content="NXlow4Yja_FSbTy6KVO0S2IwXpIMx0c0ptHPkcwbbS8" /> ,
+   google: "NXlow4Yja_F5bTy6KV0052IwXpIMsBcOptHPkcwbb58",
   },
   openGraph: {
     title: "Errordex — CI/CD Failure Encyclopedia",
