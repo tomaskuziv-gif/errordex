@@ -2584,72 +2584,31 @@ export default function ErrorDex() {
             </div>
           ) : (
             <div style={styles.carouselWrap}>
-              <div style={styles.carouselHeader}>
-                <span style={styles.carouselCount}>
-                  <strong>{filtered.length}</strong> failures found
-                  {totalPages > 1 && <span style={styles.carouselPagination}> — page {carouselPage + 1} of {totalPages}</span>}
-                </span>
-                {totalPages > 1 && (
-                  <div style={styles.carouselNav}>
-                    <button
-                      style={{ ...styles.navBtn, opacity: carouselPage === 0 ? 0.3 : 1 }}
-                      onClick={() => setCarouselPage(p => Math.max(0, p - 1))}
-                      disabled={carouselPage === 0}
-                    >
-                      ←
-                    </button>
-                    <div style={styles.dotWrap}>
-                      {Array.from({ length: totalPages }).map((_, i) => (
-                        <button
-                          key={i}
-                          style={{ ...styles.dot, background: i === carouselPage ? "#00ff88" : "#2a2a2a" }}
-                          onClick={() => setCarouselPage(i)}
-                        />
-                      ))}
-                    </div>
-                    <button
-                      style={{ ...styles.navBtn, opacity: carouselPage === totalPages - 1 ? 0.3 : 1 }}
-                      onClick={() => setCarouselPage(p => Math.min(totalPages - 1, p + 1))}
-                      disabled={carouselPage === totalPages - 1}
-                    >
-                      →
-                    </button>
-                  </div>
-                )}
-              </div>
-
-              <div style={styles.carouselGrid}>
-                {visibleCards.map((f, i) => (
-                  <button
-                    key={f.id}
-                    style={{ ...styles.card, animationDelay: `${i * 80}ms` }}
-                    className="card-hover"
-                    onClick={() => openEntry(f.id)}
-                  >
-                    <div style={styles.cardTop}>
-                      <div style={styles.cardMeta}>
-                        <span style={{ ...styles.severityBadge, color: SEVERITY_META[f.severity].color, background: SEVERITY_META[f.severity].bg }}>
-                          {SEVERITY_META[f.severity].label}
-                        </span>
-                        <span style={{ ...styles.providerBadge, color: PROVIDER_COLORS[f.provider] || "#aaa" }}>
-                          {f.provider}
-                        </span>
-                      </div>
-                      <span style={styles.cardArrow}>→</span>
-                    </div>
-                    <div style={styles.cardError}>{f.errorString}</div>
-                    <div style={styles.cardFooter}>
-                      <span style={styles.toolchainLabel}>{f.toolchain}</span>
-                      <div style={styles.cardTags}>
-                        {f.tags.slice(0, 2).map((t) => (
-                          <span key={t} style={styles.tag}>{t}</span>
-                        ))}
-                      </div>
-                    </div>
-                  </button>
-                ))}
-              </div>
-
+  <div style={styles.carouselHeader}>
+    <span style={styles.carouselCount}>
+      <strong>{filtered.length}</strong> failures found
+      {totalPages > 1 && <span style={styles.carouselPagination}> — page {carouselPage + 1} of {totalPages}</span>}
+    </span>
+    {totalPages > 1 && (
+      <div style={styles.carouselNav}>
+        <button
+          style={{ ...styles.navBtn, opacity: carouselPage === 0 ? 0.3 : 1 }}
+          onClick={() => setCarouselPage(p => Math.max(0, p - 1))}
+          disabled={carouselPage === 0}
+        >
+          ←
+        </button>
+        <span style={styles.pageNum}>{carouselPage + 1} / {totalPages}</span>
+        <button
+          style={{ ...styles.navBtn, opacity: carouselPage === totalPages - 1 ? 0.3 : 1 }}
+          onClick={() => setCarouselPage(p => Math.min(totalPages - 1, p + 1))}
+          disabled={carouselPage === totalPages - 1}
+        >
+          →
+        </button>
+      </div>
+    )}
+  </div>
               {totalPages > 1 && (
                 <div style={styles.carouselFooter}>
                   <button
@@ -2966,4 +2925,4 @@ const styles = {
   successIcon: { width: 56, height: 56, borderRadius: "50%", background: "rgba(0,255,136,0.1)", border: "1px solid rgba(0,255,136,0.3)", color: "#00ff88", fontSize: 24, display: "flex", alignItems: "center", justifyContent: "center" },
   successTitle: { fontSize: 28, fontWeight: 900, letterSpacing: "-1px", color: "#f0f0e8" },
   successText: { fontSize: 14, color: "#666", lineHeight: 1.7, maxWidth: 380 },
-};
+pageNum: { fontFamily: "'JetBrains Mono', monospace", fontSize: 12, color: "#555", minWidth: 60, textAlign: "center" },};
