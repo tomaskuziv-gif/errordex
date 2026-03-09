@@ -15,6 +15,9 @@ const geistMono = Geist_Mono({
 export const metadata = {
   title: "Errordex — CI/CD Failure Encyclopedia",
   description: "Find fixes for exact CI/CD error strings. Indexed by runner, toolchain, and provider. Built for engineers debugging at 2am.",
+  verification: {
+    google:<meta name="google-site-verification" content="NXlow4Yja_FSbTy6KVO0S2IwXpIMx0c0ptHPkcwbbS8" /> ,
+  },
   openGraph: {
     title: "Errordex — CI/CD Failure Encyclopedia",
     description: "Find fixes for exact CI/CD error strings. GitHub Actions, GitLab CI, Docker, Node.js and more.",
@@ -22,6 +25,7 @@ export const metadata = {
     siteName: "Errordex",
   },
 };
+```
 
 export default function RootLayout({
   children,
